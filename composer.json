@@ -1,0 +1,25 @@
+{
+    "name": "makhnanov/telegram-sea-battle",
+    "description": "Sea Battle Multiplayer Game in Telegram Bot.",
+    "autoload": {
+        "psr-4": {
+            "Makhnanov\\TelegramSeaBattle\\": "Src/"
+        },
+        "files": ["Src/Function.php"]
+    },
+    "authors": [
+        {
+            "name": "Roman Bakirov",
+            "email": "bakirov.important@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "makhnanov/php-telegram-bot-81": "dev-master",
+        "vlucas/phpdotenv": "5.3.x-dev",
+        "predis/predis": "2.0.x-dev"
+    },
+    "require-dev": {
+        "symfony/var-dumper": "6.0.x-dev"
+    }
+}
