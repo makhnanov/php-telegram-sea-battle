@@ -11,15 +11,11 @@ use Makhnanov\Telegram81\Api\Type\keyboard\inline\InlineKeyboardMarkup;
 use Makhnanov\Telegram81\Api\Type\Update;
 use Makhnanov\Telegram81\Helper\ResultativeInterface;
 use Makhnanov\Telegram81\Helper\Smile\SmileJoystick;
-use Makhnanov\Telegram81\Helper\Snippet;
-use Makhnanov\TelegramSeaBattle\Language\English;
-use Makhnanov\TelegramSeaBattle\Language\Russian;
-use Makhnanov\TelegramSeaBattle\Language\Translator;
+use Makhnanov\TelegramSeaBattle\Callback\HandlerFactory;
 use Makhnanov\TelegramSeaBattle\Language\UnknownLanguage;
 use Predis\Client;
 use Yiisoft\Strings\StringHelper;
 
-use function Makhnanov\Telegram81\callbackButton;
 use function Makhnanov\Telegram81\isPrivate;
 
 class SeaBattleGame
@@ -28,45 +24,27 @@ class SeaBattleGame
 
     private Client $redis;
 
-    private ?Translator $translator;
-
     public function __construct()
     {
-        //$this->bot->sendMessage(
-        //    '@program_mem',
-        //    '390941013',
-        //    Message::$start,
-        //    disable_notification: true,
-        //    reply_markup: [
-        //        'inline_keyboard' => [
-        //            [
-        //                callbackButton(ButtonText::RUSSIAN),
-        //                callbackButton(ButtonText::ENGLISH)
-        //            ],
-        //        ]
-        //    ]
-        //);
-        $this->bot = new B(getenv(Env::TOKEN))
-            ?? throw new InvalidArgumentException('Bot token must not be empty.');
-        $this->redis = new Client(['host' => getenv(Env::REDIS_HOST)]);
+        $this->bot = new B(
+            getenv(Env::TOKEN) ?: throw new InvalidArgumentException('Bot token must not be empty.')
+        );
+        $this->redis = new Client([
+            'host' => getenv(
+                Env::REDIS_HOST ?: throw new InvalidArgumentException('Redis host must not be empty.')
+            )
+        ]);
         echo 'Started at ' . date('Y-m-d H:i:s') . PHP_EOL;
     }
 
-    /**
-     * @throws UnknownLanguage
-     */
-    private function getTranslator(LangEnum $enum = null): Translator
+    public function getBot(): Bot
     {
-        if ($enum) {
-            $this->translator = $enum === LangEnum::ENGLISH
-                ? new English()
-                : new Russian();
+        return $this->bot;
+    }
 
-        }
-        if (!$this->translator) {
-            throw new UnknownLanguage();
-        }
-        return $this->translator;
+    public function getRedis(): Client
+    {
+        return $this->redis;
     }
 
     public function loop(): void
@@ -132,100 +110,17 @@ class SeaBattleGame
         $callbackQueryData = $update->callback_query->data;
         if (isPrivate($chat)) {
             dump(date('[Y-m-d H:i:s] ') . 'Private callback.');
-
-            $chat_id = $update->callback_query->from->id;
-            $message_id = $update->callback_query->message->message_id;
-
-            /** @noinspection PhpExpressionResultUnusedInspection */
+            $factory = new HandlerFactory($this, $update);
             match (true) {
-                LangEnum::exist($callbackQueryData)      => LangEnum::tryByName($callbackQueryData),
-                CallbackData::exist($callbackQueryData)  => CallbackData::tryByName($callbackQueryData),
-                SmileJoystick::exist($callbackQueryData) => SmileJoystick::tryByName($callbackQueryData),
-                default                                  => null
+                LangEnum::exist($callbackQueryData)      => $factory->handleEnum(LangEnum::class),
+                CallbackData::exist($callbackQueryData)  => $factory->handleEnum(CallbackData::class),
+                SmileJoystick::exist($callbackQueryData) => $factory->handleEnum(SmileJoystick::class),
+                default                                  => $factory->handleDefault()
             };
-
-            if ($case = LangEnum::tryByName($callbackQueryData)) {
-                $currentUserId = $chat->id;
-                $this->redis->hset('user' . $currentUserId, 'language', $callbackQueryData);
-                $translator = $this->getTranslator($case);
-                $this->bot->editMessageText(
-                    $translator->yourLanguage(),
-                    $chat_id,
-                    $message_id,
-                    reply_markup: InlineKeyboardMarkup::new([
-                        callbackButton($translator->change(), CallbackData::CHANGE_LANGUAGE->name)
-                    ])
-                );
-                $this->sendField($update);
-                return;
-            }
-            if ($case = CallbackData::tryByName($callbackQueryData)) {
-                match ($case) {
-                    CallbackData::CHANGE_LANGUAGE => $this->bot->editMessageText(
-                        Message::$changeLanguage,
-                        $chat_id,
-                        $message_id,
-                        reply_markup: InlineKeyboardMarkup::new(Keyboard::languages())
-                    ),
-                };
-                return;
-            }
-            if ($case = SmileJoystick::tryByName($callbackQueryData)) {
-                $text = $update->callback_query->message->text;
-                $exploded = explode(PHP_EOL, $text, 12);
-                $enemyField = new EnemyField();
-                for ($i = 1; $i <= 10; $i++) {
-                    $enemyField->addRow(array_values(EmojiHelper::splitByEmoji($exploded[$i])));
-                }
-                $moveResult = $enemyField->move($case);
-                dump($moveResult);
-                if ($moveResult) {
-                    $this->bot->editMessageText(
-                        str_repeat('🌫', 12) . PHP_EOL . $enemyField . $exploded[11],
-                        $chat_id,
-                        $message_id,
-                        reply_markup: Snippet::inlneJoystick()
-                    );
-                }
-
-                return;
-            }
             dump(date('[Y-m-d H:i:s] ') . 'Unhandled private callback.');
             return;
         }
         dump(date('[Y-m-d H:i:s] ') . 'Undefined callback.');
-    }
-
-    public function sendField(Update & ResultativeInterface $update): void
-    {
-        $chat = $update->callback_query?->message->chat;
-        $this->bot->sendMessage(
-            $chat->id,
-            '🌫🌫🌫🌫🌫🌫🌫🌫🌫🌫🌫🌫
-🌫🕸🎯🕸🕸🕸🕸🕸🕸🕸🕸🌫
-🌫🕸👻🕸🎯🎯🎯🕸🕸🎯🕸🌫
-🌫🕸👻🕸🎯☠️🎯🕸🕸🕸🕸🌫
-🌫🕸👆🕸🎯☠️🎯🕸🕸🕸🕸🌫
-🌫🕸👻🎯🎯☠️🎯🕸🕸🕸🕸🌫
-🌫🕸🎯🕸🎯🎯🎯🕸🕸🕸🕸🌫
-🌫🕸🕸🕸🕸🕸🕸🕸🕸🕸🕸🌫
-🌫🕸🕸🕸🕸🕸🕸🕸🎯🕸🕸🌫
-🌫🕸🕸🎯🕸🕸🕸🕸🕸🕸🕸🌫
-🌫🕸🕸🕸🕸🕸🕸🕸🕸🕸🕸🌫
-🌫0️⃣1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣8️⃣9️⃣🌫
-🌫🕸🕸🕸🕸🕸🚢🕸🕸🕸🕸🌫
-🌫🚢🕸🕸🕸🕸🕸🕸🕸🚢🕸🌫
-🌫🚢🕸🕸🚢🕸🕸🕸🕸🚢🕸🌫
-🌫🚢🕸🕸🕸🕸🕸🕸🕸🕸🕸🌫
-🌫🚢🕸🕸🕸🕸🕸🕸🕸🕸🕸🌫
-🌫🕸🕸🕸🚢🕸🕸🚢🕸🕸🕸🌫
-🌫🕸🕸🕸🕸🕸🕸🚢🕸🕸🕸🌫
-🌫🕸🕸🕸🕸🕸🕸🕸🕸🕸🕸🌫
-🌫🚢🚢🚢🕸🕸🚢🕸🕸🚢🕸🌫
-🌫🕸🕸🕸🕸🕸🕸🕸🕸🚢🕸🌫
-🌫🌫🌫🌫🌫🌫🌫🌫🌫🌫',
-            reply_markup: Snippet::inlneJoystick()
-        );
     }
 
     private function unhandledType(ResultativeInterface $update)

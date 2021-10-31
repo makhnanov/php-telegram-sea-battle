@@ -400,12 +400,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/makhnanov/php-enum-81.git",
-                "reference": "a49fa408a179180a71dd6ec75f9ddea3f62b8ecf"
+                "reference": "7563ffa88e0131c4d63c18cb32b3ba426ff5f9b6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/makhnanov/php-enum-81/zipball/a49fa408a179180a71dd6ec75f9ddea3f62b8ecf",
-                "reference": "a49fa408a179180a71dd6ec75f9ddea3f62b8ecf",
+                "url": "https://api.github.com/repos/makhnanov/php-enum-81/zipball/7563ffa88e0131c4d63c18cb32b3ba426ff5f9b6",
+                "reference": "7563ffa88e0131c4d63c18cb32b3ba426ff5f9b6",
                 "shasum": ""
             },
             "require": {
@@ -440,7 +440,7 @@
                 "issues": "https://github.com/makhnanov/php-enum-81/issues",
                 "source": "https://github.com/makhnanov/php-enum-81/tree/master"
             },
-            "time": "2021-10-27T12:00:34+00:00"
+            "time": "2021-10-31T11:13:00+00:00"
         },
         {
             "name": "makhnanov/php-telegram-bot-81",
@@ -448,12 +448,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/makhnanov/php-telegram-bot-81.git",
-                "reference": "919d556b11634c3633cd99bdfb185d0439c0153e"
+                "reference": "b18fa033762af05062265de0cb124e19691301dd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/makhnanov/php-telegram-bot-81/zipball/919d556b11634c3633cd99bdfb185d0439c0153e",
-                "reference": "919d556b11634c3633cd99bdfb185d0439c0153e",
+                "url": "https://api.github.com/repos/makhnanov/php-telegram-bot-81/zipball/b18fa033762af05062265de0cb124e19691301dd",
+                "reference": "b18fa033762af05062265de0cb124e19691301dd",
                 "shasum": ""
             },
             "require": {
@@ -492,7 +492,7 @@
                 "issues": "https://github.com/makhnanov/php-telegram-bot-81/issues",
                 "source": "https://github.com/makhnanov/php-telegram-bot-81/tree/master"
             },
-            "time": "2021-10-28T15:49:10+00:00"
+            "time": "2021-10-31T11:22:34+00:00"
         },
         {
             "name": "phpoption/phpoption",
