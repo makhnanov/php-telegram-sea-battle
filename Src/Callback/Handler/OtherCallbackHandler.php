@@ -2,13 +2,12 @@
 
 namespace Makhnanov\TelegramSeaBattle\Callback\Handler;
 
-use Makhnanov\Telegram81\Api\Type\keyboard\inline\InlineKeyboardMarkup;
+use Makhnanov\Telegram81\Snippet\KeyboardSnippet;
 use Makhnanov\TelegramSeaBattle\Callback\CallbackHandler;
 use Makhnanov\TelegramSeaBattle\CallbackData;
-use Makhnanov\TelegramSeaBattle\Keyboard;
 use Makhnanov\TelegramSeaBattle\Message;
 
-class Other extends CallbackHandler
+class OtherCallbackHandler extends CallbackHandler
 {
     public function handle(): void
     {
@@ -17,7 +16,7 @@ class Other extends CallbackHandler
                 Message::$changeLanguage,
                 $this->chat_id,
                 $this->message_id,
-                reply_markup: InlineKeyboardMarkup::new(Keyboard::languages())
+                reply_markup: KeyboardSnippet::russianEnglish()
             ),
         };
     }

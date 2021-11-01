@@ -7,12 +7,12 @@ use Makhnanov\Telegram81\Api\B;
 use Makhnanov\Telegram81\Api\Bot;
 use Makhnanov\Telegram81\Api\Enumeration\AllowedUpdates;
 use Makhnanov\Telegram81\Api\Exception\UnchangedMessageException;
-use Makhnanov\Telegram81\Api\Type\keyboard\inline\InlineKeyboardMarkup;
 use Makhnanov\Telegram81\Api\Type\Update;
+use Makhnanov\Telegram81\Emoji\Enumeration\JoystickEnum;
 use Makhnanov\Telegram81\Helper\ResultativeInterface;
-use Makhnanov\Telegram81\Helper\Smile\SmileJoystick;
+use Makhnanov\Telegram81\Snippet\KeyboardSnippet;
+use Makhnanov\Telegram81\Snippet\LanguageSnippetEnum;
 use Makhnanov\TelegramSeaBattle\Callback\HandlerFactory;
-use Makhnanov\TelegramSeaBattle\Language\UnknownLanguage;
 use Predis\Client;
 use Yiisoft\Strings\StringHelper;
 
@@ -26,15 +26,13 @@ class SeaBattleGame
 
     public function __construct()
     {
+        Logger::log('Start');
         $this->bot = new B(
             getenv(Env::TOKEN) ?: throw new InvalidArgumentException('Bot token must not be empty.')
         );
         $this->redis = new Client([
-            'host' => getenv(
-                Env::REDIS_HOST ?: throw new InvalidArgumentException('Redis host must not be empty.')
-            )
+            'host' => getenv(Env::REDIS_HOST) ?: throw new InvalidArgumentException('Redis host must not be empty.')
         ]);
-        echo 'Started at ' . date('Y-m-d H:i:s') . PHP_EOL;
     }
 
     public function getBot(): Bot
@@ -69,12 +67,15 @@ class SeaBattleGame
         $callbackQueryData = $update?->callback_query?->data;
         try {
             match (true) {
-                $this->isStart($text)    => $this->start($update),
                 (bool)$callbackQueryData => $this->handleCallbackDataQuery($update),
-                default                  => $this->unhandledType($update),
+                $this->isStart($text) => $this->start($update),
+                default => $this->unhandledType($update),
             };
-        } catch (UnchangedMessageException $e) {
-            dump('You send unchanged message.');
+        } catch (UnchangedMessageException) {
+            Logger::log('Unchanged message exception.');
+        } catch (\Throwable $e) {
+            //            dump($e->getResponse()->getBody()->getContents());
+            throw $e;
         }
     }
 
@@ -96,35 +97,32 @@ class SeaBattleGame
                 $chat_id,
                 Message::$changeLanguage,
                 disable_notification: true,
-                reply_markup: InlineKeyboardMarkup::new(Keyboard::languages())
+                reply_markup: KeyboardSnippet::russianEnglish()
             );
         }
     }
 
-    /**
-     * @throws UnknownLanguage|UnchangedMessageException
-     */
     public function handleCallbackDataQuery(Update & ResultativeInterface $update): void
     {
         $chat = $update->callback_query?->message->chat;
         $callbackQueryData = $update->callback_query->data;
         if (isPrivate($chat)) {
-            dump(date('[Y-m-d H:i:s] ') . 'Private callback.');
+            Logger::log('Private callback.');
             $factory = new HandlerFactory($this, $update);
             match (true) {
-                LangEnum::exist($callbackQueryData)      => $factory->handleEnum(LangEnum::class),
-                CallbackData::exist($callbackQueryData)  => $factory->handleEnum(CallbackData::class),
-                SmileJoystick::exist($callbackQueryData) => $factory->handleEnum(SmileJoystick::class),
-                default                                  => $factory->handleDefault()
+                LanguageSnippetEnum::exist($callbackQueryData) => $factory->handleEnum(LanguageSnippetEnum::class),
+                CallbackData::exist($callbackQueryData) => $factory->handleEnum(CallbackData::class),
+                JoystickEnum::exist($callbackQueryData) => $factory->handleEnum(JoystickEnum::class),
+                Skin::exist($callbackQueryData) => $factory->handleEnum(Skin::class),
+                default => $factory->handleDefault()
             };
-            dump(date('[Y-m-d H:i:s] ') . 'Unhandled private callback.');
             return;
         }
-        dump(date('[Y-m-d H:i:s] ') . 'Undefined callback.');
+        Logger::log('Not private callback received.');
     }
 
     private function unhandledType(ResultativeInterface $update)
     {
-        dump($update->getResult());
+        Logger::log($update->getResult());
     }
 }

@@ -2,11 +2,11 @@
 
 namespace Makhnanov\TelegramSeaBattle;
 
-use Makhnanov\PhpEnum81\EnumUpgrade;
+use Makhnanov\PhpEnum81\UpgradeEnum;
 
 enum Env
 {
-    use EnumUpgrade;
+    use UpgradeEnum;
 
     case TOKEN;
     case REDIS_HOST;

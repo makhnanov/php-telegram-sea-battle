@@ -2,11 +2,11 @@
 
 namespace Makhnanov\TelegramSeaBattle;
 
-use Makhnanov\PhpEnum81\EnumUpgrade;
+use Makhnanov\PhpEnum81\UpgradeEnum;
 
 enum CallbackData
 {
-    use EnumUpgrade;
+    use UpgradeEnum;
 
     case CHANGE_LANGUAGE;
 }

@@ -2,11 +2,11 @@
 
 namespace Makhnanov\TelegramSeaBattle;
 
-use Makhnanov\PhpEnum81\EnumUpgrade;
+use Makhnanov\PhpEnum81\UpgradeEnum;
 
-enum LangEnum: string
+enum Lang: string
 {
-    use EnumUpgrade;
+    use UpgradeEnum;
 
     case RUSSIAN = 'Русский 🇷🇺';
     case ENGLISH = 'English 🇺🇸';
